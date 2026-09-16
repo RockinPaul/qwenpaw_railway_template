@@ -16,9 +16,10 @@ export QWENPAW_PORT="${PORT:-8080}"
 # container refuses to start without them.
 #
 # There is a second reason the gate has to hold: QwenPaw skips authentication
-# entirely for requests from 127.0.0.1 and ::1. That is why this image binds
-# :: directly rather than putting a relay in front of the app — see the
-# Dockerfile. With no loopback peer in the path, the login is the only way in.
+# entirely for requests from 127.0.0.1 and ::1. That is why nothing proxies
+# inside this container — see the Dockerfile. Railway's proxy connects to the
+# app directly, so the peer address is never loopback and the login is the
+# only way in.
 case "$(printf '%s' "${QWENPAW_AUTH_ENABLED:-true}" | tr '[:upper:]' '[:lower:]')" in
     true|1|yes) ;;
     *)
@@ -56,6 +57,6 @@ fi
 mkdir -p "${QWENPAW_WORKING_DIR}" "${QWENPAW_SECRET_DIR}" "${QWENPAW_BACKUP_DIR}"
 
 echo "qwenpaw: state at ${QWENPAW_WORKING_DIR}, secrets at ${QWENPAW_SECRET_DIR}"
-echo "qwenpaw: serving on [::]:${QWENPAW_PORT} with login required as '${QWENPAW_AUTH_USERNAME}'"
+echo "qwenpaw: serving on 0.0.0.0:${QWENPAW_PORT} with login required as '${QWENPAW_AUTH_USERNAME}'"
 
 exec /entrypoint.sh "$@"
