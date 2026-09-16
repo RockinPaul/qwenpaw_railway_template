@@ -21,6 +21,7 @@ Chromium; there is no VNC or noVNC and that display is not viewable by design.
 |---|---|---|
 | `QWENPAW_AUTH_PASSWORD` | generated, 24 chars | Console sign-in for `admin`. Read it from the service variables after deploying. |
 | `QWENPAW_AUTH_USERNAME` | `admin` | The account created on first boot. |
+| `QWENPAW_AGENT_LANGUAGE` | `en` | Language of the agent's persona files, chosen on first boot only. `en`, `zh`, `ru` or `id`. |
 | `PORT` | `8080` | The port Railway's healthcheck probes and the domain targets. Leave it alone. |
 | `QWENPAW_WORKING_DIR` | `/data/working` | Baked. Conversations, memory, skills, local models. |
 | `QWENPAW_SECRET_DIR` | `/data/working.secret` | Baked. Provider credentials, mode 0700. |
@@ -33,6 +34,13 @@ The deploy form asks for nothing you have to invent.
 1. Copy `QWENPAW_AUTH_PASSWORD` from the service's **Variables** tab.
 2. Open the public domain and sign in as **`admin`**.
 3. Add a provider key under **Settings → Models** and pick a default model.
+
+**The agent's language is also first-boot only.** Upstream defaults to `zh` and has no environment
+variable or init flag for it, so an unconfigured deployment gets a Chinese-speaking agent. This
+template seeds `QWENPAW_AGENT_LANGUAGE` (default `en`) into `config.json` before the first
+initialisation, which is the only moment the choice is free — afterwards the persona files are on the
+volume and upstream's non-interactive init copies with `skip_existing=True`, so it will not replace
+them. Set it before you deploy, or create a new agent in the console with the language you want.
 
 **The password variable is write-once.** Upstream creates the account on first boot and then ignores
 the auto-registration variables. Measured: after changing `QWENPAW_AUTH_PASSWORD` and replacing the

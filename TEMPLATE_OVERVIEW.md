@@ -59,6 +59,14 @@ password is generated for your deployment and the container refuses to start wit
 **After deploying:** copy `QWENPAW_AUTH_PASSWORD` from the service's Variables tab, open the public
 domain and sign in as **`admin`**. Then add a provider key under Settings and pick a model.
 
+**Pick the agent's language before you deploy.** Upstream's default is Chinese and it offers no
+environment variable for it, so this template adds `QWENPAW_AGENT_LANGUAGE` — `en` by default, with
+`zh`, `ru` and `id` also available — and writes it into the configuration before the first
+initialisation. That is the only point at which it is free: the persona files (`AGENTS.md`,
+`SOUL.md`, `PROFILE.md` and the rest) are copied into the workspace once, and upstream's
+non-interactive initialiser will not overwrite them afterwards. If you change your mind later, create
+a new agent in the console and choose its language there.
+
 **The password cannot be rotated from the variable.** Upstream creates the account on first boot and
 then ignores the auto-registration variables entirely — measured: after changing the variable and
 replacing the container, the original password still signed in and the new one returned 401. Change
