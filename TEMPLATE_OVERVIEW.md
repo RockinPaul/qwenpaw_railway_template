@@ -64,17 +64,19 @@ then ignores the auto-registration variables entirely — measured: after changi
 replacing the container, the original password still signed in and the new one returned 401. Change
 the password from inside the console, not from the Variables tab.
 
-**Why the listener is IPv6 and why there is no relay.** Railway's private network is IPv6-only, and
-upstream starts the app on `0.0.0.0`, which never accepts an IPv6 connection. The usual fix is a
-small relay in front, and here that would silently disable the login: QwenPaw skips authentication
-for peers on `127.0.0.1` and `::1`, so every relayed request arrives looking local. Measured against
-v2.2.1, `/api/skills` answers **200** from `::1` and **401** from a real peer. This image patches the
-listener to `::` instead, and the build fails outright if that patch ever stops applying.
+**Why nothing proxies inside this container.** QwenPaw skips authentication for peers on
+`127.0.0.1` and `::1`, so a relay in front of the app would make every request arrive looking local
+and silently disable the login — measured against v2.2.1, `/api/skills` answers **200** from `::1`
+and **401** from a real peer. Upstream's own `0.0.0.0` binding is therefore left exactly as it is:
+Railway's edge connects to it directly, the peer address is the platform's proxy rather than
+loopback, and the login is enforced. Rebinding to `::` was tried and is wrong here — Python sets
+`IPV6_V6ONLY`, so the socket stops accepting the IPv4 connections Railway's public proxy makes.
 
-**Security.** Measured through a real network peer, not read from the docs: the console and
+**Security.** Measured through Railway's edge, not read from the docs: the console and
 `/api/auth/status` are public so the sign-in page can load, `/api/skills` and the rest of the API
-return **401** unauthenticated, sign-in returns **401** on a wrong password and **200** with a token
-on the right one, and that token then opens the API. The honest caveat: this is an agent with shell
+return **401** unauthenticated — including with a forged `X-Forwarded-For: 127.0.0.1`, because
+upstream requires the direct TCP peer to be loopback as well — sign-in returns **401** on a wrong
+password and **200** with a token on the right one, and that token then opens the API. The honest caveat: this is an agent with shell
 and filesystem tools, so the blast radius of the URL is this container. Keep the generated password
 and treat the link like an SSH session into a dev box.
 

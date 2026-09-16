@@ -49,7 +49,9 @@ characters, and refuses to start at all if authentication is explicitly disabled
 
 Measured against a running instance from a real network peer:
 
-- `/api/skills` and the rest of the API return **401** unauthenticated.
+- `/api/skills` and the rest of the API return **401** unauthenticated, and still **401** with a
+  forged `X-Forwarded-For: 127.0.0.1` or `X-Real-IP: 127.0.0.1` — upstream requires the direct TCP
+  peer to be loopback too, so the bypass is not reachable by header spoofing.
 - `/` and `/api/auth/status` return **200** — the console shell and the sign-in probe are public so
   the login page can load. `/api/auth/status` reports only `{"enabled":true,"has_users":true}`.
 - Sign-in returns **401** on a wrong password and **200** with a bearer token on the right one, and
@@ -63,14 +65,15 @@ see [Security](https://github.com/agentscope-ai/QwenPaw/blob/main/website/public
 
 ## Why it is shaped this way
 
-- **`--host ::` instead of a relay.** Railway's private network is IPv6-only and upstream binds
-  `0.0.0.0`. The usual fix in this portfolio is a `socat` relay, and here it would be a security
-  hole: QwenPaw skips authentication for `127.0.0.1` and `::1`, so a relay makes every request look
-  local. Measured: `/api/skills` returns **200** from `::1` and **401** from a real peer. The
-  Dockerfile patches the supervisord template and then greps its own patch, so a future upstream
-  rename fails the build rather than quietly regressing to an unreachable IPv4-only listener.
-- **The listener is IPv6-only, not dual-stack.** Python sets `IPV6_V6ONLY`, so `[::]:8080` appears in
-  `tcp6` with nothing in `tcp4` — verified. That is exactly what Railway needs.
+- **No relay, and upstream's `0.0.0.0` left alone.** A `socat` relay is the usual fix in this
+  portfolio, and here it would be a security hole: QwenPaw skips authentication for `127.0.0.1` and
+  `::1`, so a relay makes every request look local. Measured: `/api/skills` returns **200** from
+  `::1` and **401** from a real peer. With nothing proxying inside the container, Railway's edge is
+  the peer and the login is enforced.
+- **Rebinding to `::` was tried and is wrong.** Python sets `IPV6_V6ONLY`, so `--host ::` is an
+  IPv6-only socket, and Railway's *public* proxy reaches the container over IPv4: the edge returned
+  **502** on every path while the app answered **200** on `[::1]` inside the same container. IPv6 is
+  what private networking between services needs, not what a public domain uses.
 - **Three directories, one volume.** All three are plain environment variables, so they consolidate
   onto `/data` instead of being lost under `/app` on redeploy.
 - **`restartPolicyType: ALWAYS`.** A clean `SIGTERM` exits `0`, which `ON_FAILURE` would not restart.
@@ -111,9 +114,10 @@ flow, not an interactive terminal — the console ships no terminal emulator.
 
 ## Upgrading
 
-Bump `QWENPAW_VERSION` in the `Dockerfile` and push. If upstream moves or rewrites
-`/etc/supervisor/conf.d/supervisord.conf.template`, the build fails on the `grep` guard rather than
-shipping an unreachable listener — that is intentional.
+Bump `QWENPAW_VERSION` in the `Dockerfile` and push. The wrapper touches nothing inside the image
+beyond environment variables and an entrypoint, so a version bump is usually the whole change. The
+one thing to re-check on a major bump is that upstream still binds `0.0.0.0` — a switch to an
+IPv6-only default would make the service unreachable from Railway's edge.
 
 ## Licences
 
