@@ -3,7 +3,7 @@
 # Nothing is rebuilt here. Upstream's image is pinned and its three state
 # directories are pointed at the Railway volume. The listener is left exactly
 # as upstream sets it, for a reason worth spelling out — see below.
-ARG QWENPAW_VERSION=v2.2.1
+ARG QWENPAW_VERSION=v2.2.2
 FROM agentscope/qwenpaw:${QWENPAW_VERSION}
 
 # Upstream defaults all three directories under /app, which is image-local and

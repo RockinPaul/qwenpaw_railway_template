@@ -10,7 +10,7 @@ console, long-term memory, skills, plugins, browser automation and an agent that
 
 | Service | Base | Public | Role |
 |---|---|---|---|
-| `qwenpaw` | `agentscope/qwenpaw:v2.2.1` | **yes** | Console, API, agent, browser automation — one process tree under supervisord. |
+| `qwenpaw` | `agentscope/qwenpaw:v2.2.2` | **yes** | Console, API, agent, browser automation — one process tree under supervisord. |
 
 One service, one volume. The image also runs Xvfb and xfce4 so the agent can drive a headed
 Chromium; there is no VNC or noVNC and that display is not viewable by design.

@@ -50,7 +50,7 @@ password is generated for your deployment and the container refuses to start wit
 ### Deployment Dependencies
 
 - Upstream project: [agentscope-ai/QwenPaw](https://github.com/agentscope-ai/QwenPaw) (Apache-2.0),
-  image `agentscope/qwenpaw:v2.2.1`.
+  image `agentscope/qwenpaw:v2.2.2`.
 - Upstream documentation: [QwenPaw docs](https://github.com/agentscope-ai/QwenPaw/tree/main/website/public/docs).
 - Template source: [RockinPaul/qwenpaw_railway_template](https://github.com/RockinPaul/qwenpaw_railway_template) (MIT).
 
